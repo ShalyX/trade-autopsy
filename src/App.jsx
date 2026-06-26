@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UploadCloud, Settings, ChevronRight, Activity, TrendingDown, Clock, ShieldAlert, FileText, Circle, AlertTriangle, Play } from 'lucide-react';
 import Papa from 'papaparse';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import Footer from './components/Footer';
+import Tour from './components/Tour';
 import './index.css';
 
 function App() {
@@ -12,8 +13,26 @@ function App() {
   const [analyzing, setAnalyzing] = useState(false);
   const [report, setReport] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('trade_autopsy_key') || '');
   const [provider, setProvider] = useState(localStorage.getItem('trade_autopsy_provider') || 'bitget-qwen');
+
+  const tourSteps = [
+    { target: '#tour-header', title: 'Welcome to Trade Autopsy', content: 'This AI-powered tool helps you analyze trading logs to find failure regimes.' },
+    { target: '#tour-settings-btn', title: 'Configure Your Agent', content: 'Start here! Select your preferred LLM provider and enter your API key to enable live analysis.' },
+    { target: '#tour-upload-zone', title: 'Upload Your Logs', content: 'Once configured, launch the app and drop your CSV trade logs here to generate a post-mortem.' }
+  ];
+
+  useEffect(() => {
+    if (isAppLaunched && !localStorage.getItem('trade_autopsy_react_tour_seen')) {
+      setTimeout(() => setShowTour(true), 500);
+    }
+  }, [isAppLaunched]);
+
+  const closeTour = () => {
+    localStorage.setItem('trade_autopsy_react_tour_seen', 'true');
+    setShowTour(false);
+  };
 
   const saveKey = (e) => {
     e.preventDefault();
@@ -67,7 +86,7 @@ function App() {
 
       <header className="flex justify-between items-center" style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border-glass)', background: '#0a0d14', position: 'sticky', top: 0, zIndex: 10 }}>
         {/* Left: Logo & Titles */}
-        <div className="flex items-center gap-3" style={{ cursor: 'pointer' }} onClick={() => setIsAppLaunched(false)}>
+        <div id="tour-header" className="flex items-center gap-3" style={{ cursor: 'pointer' }} onClick={() => setIsAppLaunched(false)}>
           <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '8px' }}>
             <Activity color="var(--primary)" size={24} />
           </div>
@@ -89,7 +108,13 @@ function App() {
             <Circle size={10} fill="currentColor" /> {apiKey ? 'AGENT READY' : 'AGENT IDLE'}
           </div>
 
-          <button onClick={() => setShowSettings(true)} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+          {isAppLaunched && (
+            <button onClick={() => setShowTour(true)} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+              Tour
+            </button>
+          )}
+
+          <button id="tour-settings-btn" onClick={() => setShowSettings(true)} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
             <Settings size={14} /> Settings
           </button>
 
@@ -147,7 +172,7 @@ function App() {
           <>
             {!tradeData && !analyzing && (
               <div className="flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: '60vh' }}>
-                <div className="glass-panel text-center" style={{ padding: '4rem 3rem', maxWidth: '600px', width: '100%' }}>
+                <div id="tour-upload-zone" className="glass-panel text-center" style={{ padding: '4rem 3rem', maxWidth: '600px', width: '100%' }}>
                   <div style={{ background: 'rgba(59, 130, 246, 0.1)', width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <UploadCloud size={40} color="var(--primary)" />
                   </div>
@@ -192,6 +217,8 @@ function App() {
       </main>
 
       <Footer />
+      
+      {showTour && <Tour steps={tourSteps} onClose={closeTour} />}
     </div>
   );
 }
